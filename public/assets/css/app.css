@@ -1,10 +1,18 @@
 /* Athletics Command Center — base stylesheet.
    Mobile-first; enhance with min-width media queries.
-   School colors are injected per tenant as --color-primary / --color-secondary. */
+   School theme colors are injected per tenant by the layout as
+   --color-primary / --color-secondary (+ --on-primary / --on-secondary
+   for readable text on those backgrounds). */
 
 :root {
     --color-primary: #1d4ed8;
     --color-secondary: #111827;
+    --on-primary: #ffffff;
+    --on-secondary: #ffffff;
+    --gray-bg: #f3f4f6;
+    --gray-border: #d1d5db;
+    --gray-text: #6b7280;
+    --danger: #b91c1c;
 }
 
 * { box-sizing: border-box; }
@@ -12,13 +20,301 @@
 body {
     font-family: system-ui, -apple-system, sans-serif;
     margin: 0;
-    background: #f3f4f6;
+    background: var(--gray-bg);
     color: #111827;
     -webkit-text-size-adjust: 100%;
 }
 
+a { color: var(--color-primary); }
+
+h1 { font-size: 1.4rem; margin: 0 0 1rem; }
+h2 { font-size: 1.05rem; margin: 0 0 .75rem; }
+
 .wrap {
-    max-width: 960px;
+    max-width: 1080px;
     margin: 0 auto;
     padding: 1rem;
 }
+
+.muted { color: var(--gray-text); }
+
+/* --- Top bar / navigation ------------------------------------------------ */
+
+.topbar {
+    background: var(--color-secondary);
+    color: var(--on-secondary);
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .5rem 1rem;
+    padding: .5rem 1rem;
+    border-bottom: 3px solid var(--color-primary);
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    color: var(--on-secondary);
+    text-decoration: none;
+    font-weight: 700;
+    min-height: 44px;
+    margin-right: auto;
+}
+
+.brand-logo { height: 36px; width: auto; }
+
+.nav-toggle {
+    background: none;
+    border: 1px solid var(--on-secondary);
+    color: var(--on-secondary);
+    font-size: 1.2rem;
+    padding: .3rem .6rem;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.mainnav { display: none; width: 100%; }
+.mainnav.open { display: block; }
+
+.nav-links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.nav-links a,
+.nav-user a {
+    display: block;
+    color: var(--on-secondary);
+    text-decoration: none;
+    padding: .7rem .5rem;   /* comfortable touch targets */
+    border-radius: 6px;
+    opacity: .85;
+}
+
+.nav-links a:hover, .nav-user a:hover { opacity: 1; background: rgba(128, 128, 128, .25); }
+.nav-links a.active, .nav-user a.active {
+    opacity: 1;
+    font-weight: 700;
+    box-shadow: inset 0 -3px 0 var(--color-primary);
+}
+
+.nav-user {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .5rem;
+    border-top: 1px solid rgba(128, 128, 128, .35);
+    margin-top: .25rem;
+}
+
+.nav-username { opacity: .7; font-size: .9rem; }
+
+.btn-link {
+    background: none;
+    border: none;
+    color: var(--on-secondary);
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: .95rem;
+    padding: .5rem 0;
+}
+
+@media (min-width: 900px) {
+    .nav-toggle { display: none; }
+    .mainnav { display: flex; width: auto; align-items: center; gap: .5rem; flex: 1; justify-content: space-between; }
+    .nav-links { flex-direction: row; gap: .1rem; }
+    .nav-links a { padding: .6rem .6rem; }
+    .nav-user { border-top: none; margin: 0; padding: 0; }
+}
+
+/* --- Cards / layout ------------------------------------------------------- */
+
+.card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 1.25rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .12);
+    margin-bottom: 1rem;
+}
+
+.card.narrow { max-width: 560px; }
+
+.cards {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+@media (min-width: 700px) {
+    .cards { grid-template-columns: 1fr 1fr; }
+}
+
+.page-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+.page-head h1 { margin: 0; }
+
+/* --- Flash messages -------------------------------------------------------- */
+
+.msg { padding: .75rem 1rem; border-radius: 6px; margin-bottom: 1rem; font-size: .95rem; }
+.msg.err { background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; }
+.msg.ok  { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+
+/* --- Forms ----------------------------------------------------------------- */
+
+.field { margin-bottom: .9rem; }
+
+.field label {
+    display: block;
+    font-weight: 600;
+    font-size: .85rem;
+    margin-bottom: .3rem;
+}
+
+.field input:not([type="color"]):not([type="checkbox"]),
+.field select {
+    width: 100%;
+    max-width: 480px;
+    padding: .65rem .75rem;
+    font-size: 1rem;
+    border: 1px solid var(--gray-border);
+    border-radius: 6px;
+    background: #fff;
+}
+
+.field input:focus, .field select:focus, .row-form input:focus {
+    outline: 2px solid var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+input[type="color"] {
+    width: 64px;
+    height: 40px;
+    padding: 2px;
+    border: 1px solid var(--gray-border);
+    border-radius: 6px;
+    background: #fff;
+    cursor: pointer;
+}
+
+.field-row { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+
+.checkgrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: .25rem .75rem;
+}
+
+.check {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .45rem .25rem;  /* touch-friendly */
+    font-size: .95rem;
+    cursor: pointer;
+}
+
+.check input { width: 18px; height: 18px; }
+
+.form-actions { display: flex; gap: .75rem; align-items: center; margin-top: 1rem; }
+
+/* Inline row forms (sponsorship levels, job types) */
+.row-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+    padding: .5rem 0;
+    border-bottom: 1px solid #e5e7eb;
+}
+.row-form:last-of-type { border-bottom: none; }
+
+.row-form input:not([type="color"]) {
+    padding: .5rem .6rem;
+    font-size: .95rem;
+    border: 1px solid var(--gray-border);
+    border-radius: 6px;
+    flex: 1 1 160px;
+    min-width: 0;
+}
+
+.row-form .input-sm { flex: 0 0 80px; }
+.row-form input[type="color"] { flex: 0 0 48px; width: 48px; height: 36px; }
+
+.inactive-row { opacity: .55; }
+
+/* --- Buttons ---------------------------------------------------------------- */
+
+.btn {
+    display: inline-block;
+    padding: .65rem 1rem;
+    font-size: .95rem;
+    font-weight: 600;
+    border: 1px solid var(--gray-border);
+    border-radius: 6px;
+    background: #fff;
+    color: #111827;
+    text-decoration: none;
+    cursor: pointer;
+    line-height: 1.2;
+}
+
+.btn-primary {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--on-primary);
+}
+
+.btn-danger { color: var(--danger); border-color: #fca5a5; }
+
+.btn-sm { padding: .4rem .7rem; font-size: .85rem; }
+
+.btn-block { width: 100%; }
+
+/* --- Tables ------------------------------------------------------------------ */
+
+.table-scroll { overflow-x: auto; }
+
+.table { border-collapse: collapse; width: 100%; font-size: .95rem; }
+
+.table th, .table td {
+    text-align: left;
+    padding: .6rem .6rem;
+    border-bottom: 1px solid #e5e7eb;
+    white-space: nowrap;
+}
+
+.table th { font-size: .8rem; text-transform: uppercase; color: var(--gray-text); }
+
+.table .actions { display: flex; gap: .5rem; align-items: center; }
+
+/* --- Badges ------------------------------------------------------------------- */
+
+.badge {
+    display: inline-block;
+    padding: .2rem .6rem;
+    font-size: .8rem;
+    font-weight: 600;
+    border-radius: 999px;
+    border: 1px solid rgba(0, 0, 0, .15);
+}
+
+.badge-role { background: var(--gray-bg); text-transform: capitalize; }
+
+/* --- Misc ------------------------------------------------------------------------ */
+
+.logo-preview { max-height: 80px; max-width: 240px; }
+
+/* --- Auth pages (login / install) --------------------------------------------------- */
+
+.auth-page { background: var(--gray-bg); }
+.auth-wrap { max-width: 420px; margin: 8vh auto 0; padding: 0 1rem; }
+.auth-card h1 { font-size: 1.2rem; margin-bottom: .25rem; }

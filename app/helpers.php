@@ -6,7 +6,10 @@ declare(strict_types=1);
  *
  * Every entry-point script (pages in /public, API wrappers) starts with:
  *     require __DIR__ . '/../app/helpers.php';
- * which loads config + db and starts the session.
+ * which loads config + db and starts the session, then calls
+ * require_login() / require_role() as its guard. Tenant scoping is applied
+ * through tenant_query() and friends — see the multi-tenancy rules in
+ * CLAUDE.md.
  */
 
 require_once __DIR__ . '/config.php';
@@ -63,6 +66,43 @@ function not_found(string $message = 'Not found'): never
     http_response_code(404);
     echo e($message);
     exit;
+}
+
+// ---------------------------------------------------------------------------
+// Flash messages (redirect-after-POST feedback)
+// ---------------------------------------------------------------------------
+
+/** Queue a message to show on the next rendered page. $type: 'success' | 'error'. */
+function flash(string $message, string $type = 'success'): void
+{
+    $_SESSION['flash'][] = ['message' => $message, 'type' => $type];
+}
+
+/** Pull queued flash messages (clears the queue). */
+function consume_flashes(): array
+{
+    $flashes = $_SESSION['flash'] ?? [];
+    unset($_SESSION['flash']);
+    return $flashes;
+}
+
+// ---------------------------------------------------------------------------
+// View rendering
+// ---------------------------------------------------------------------------
+
+/**
+ * Render a template from app/views/ inside the base layout.
+ * $data keys become local variables in the template; 'title' and 'active'
+ * (nav highlight key) are also used by the layout header.
+ * Only call on authenticated pages — the layout needs the current user/school.
+ */
+function view(string $template, array $data = []): void
+{
+    extract($data, EXTR_SKIP);
+    $flashes = consume_flashes();
+    require __DIR__ . '/views/layout_header.php';
+    require __DIR__ . '/views/' . $template . '.php';
+    require __DIR__ . '/views/layout_footer.php';
 }
 
 // ---------------------------------------------------------------------------
@@ -218,6 +258,23 @@ function current_school_id(): int
     return (int)$user['school_id'];
 }
 
+/** The current user's school row (cached per request). */
+function current_school(): array
+{
+    static $school = null;
+
+    if ($school === null) {
+        $stmt = db()->prepare('SELECT * FROM schools WHERE id = ?');
+        $stmt->execute([current_school_id()]);
+        $school = $stmt->fetch();
+        if ($school === false) {
+            throw new RuntimeException('Current school not found');
+        }
+    }
+
+    return $school;
+}
+
 /**
  * Run a prepared query that is guaranteed tenant-scoped: the SQL must
  * reference :school_id (enforced), and it is bound automatically from the
@@ -255,12 +312,12 @@ function tenant_fetch_all(string $sql, array $params = []): array
 // Per-school settings (school_settings key/value table)
 // ---------------------------------------------------------------------------
 
-/** Read one setting for the current school, with a default. */
-function school_setting(string $key, ?string $default = null): ?string
+/** All settings for the current school as key => value (cached per request). */
+function school_settings_all(bool $reload = false): array
 {
     static $cache = null;
 
-    if ($cache === null) {
+    if ($cache === null || $reload) {
         $cache = [];
         $rows = tenant_fetch_all(
             'SELECT setting_key, setting_value FROM school_settings WHERE school_id = :school_id'
@@ -270,7 +327,14 @@ function school_setting(string $key, ?string $default = null): ?string
         }
     }
 
-    return $cache[$key] ?? $default;
+    return $cache;
+}
+
+/** Read one setting for the current school, with a default. */
+function school_setting(string $key, ?string $default = null): ?string
+{
+    $value = school_settings_all()[$key] ?? null;
+    return ($value === null || $value === '') ? $default : $value;
 }
 
 /** Write one setting for the current school (insert or update). */
@@ -282,4 +346,42 @@ function set_school_setting(string $key, string $value): void
          ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)',
         ['k' => $key, 'v' => $value]
     );
+    school_settings_all(true);
+}
+
+// ---------------------------------------------------------------------------
+// Theming (school colors + logo, applied by the base layout)
+// ---------------------------------------------------------------------------
+
+/** Validated theme color for 'primary' or 'secondary' (falls back to defaults). */
+function theme_color(string $which): string
+{
+    $default = $which === 'primary' ? '#1d4ed8' : '#111827';
+    $color = school_setting('color_' . $which, $default) ?? $default;
+    return preg_match('/^#[0-9a-fA-F]{6}$/', $color) ? strtolower($color) : $default;
+}
+
+/** Black or white, whichever reads better on the given hex background. */
+function contrast_color(string $hex): string
+{
+    $hex = ltrim($hex, '#');
+    if (strlen($hex) !== 6 || !ctype_xdigit($hex)) {
+        return '#ffffff';
+    }
+    [$r, $g, $b] = array_map(fn (int $i) => hexdec(substr($hex, $i, 2)), [0, 2, 4]);
+    return (0.299 * $r + 0.587 * $g + 0.114 * $b) > 150 ? '#111827' : '#ffffff';
+}
+
+/** URL of the school logo (cache-busted), or null if none uploaded. */
+function school_logo_url(): ?string
+{
+    $path = school_setting('logo_path');
+    if ($path === null) {
+        return null;
+    }
+    $abs = __DIR__ . '/../public/' . $path;
+    if (!is_file($abs)) {
+        return null;
+    }
+    return BASE_URL . '/' . $path . '?v=' . filemtime($abs);
 }

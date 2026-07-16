@@ -8,6 +8,8 @@ declare(strict_types=1);
  */
 
 require __DIR__ . '/../app/helpers.php';
+require __DIR__ . '/../app/migrate.php';
+require __DIR__ . '/../app/seed.php';
 
 if (!INSTALL_ENABLED) {
     http_response_code(404);
@@ -37,52 +39,6 @@ function is_installed(): bool
     } catch (PDOException) {
         return false; // table doesn't exist yet
     }
-}
-
-/**
- * Run every migrations/NNN_*.sql not yet recorded in schema_migrations,
- * in filename order. Returns the list of filenames applied.
- */
-function run_pending_migrations(): array
-{
-    db()->exec(
-        'CREATE TABLE IF NOT EXISTS schema_migrations (
-            filename   VARCHAR(120) NOT NULL,
-            applied_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (filename)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
-    );
-
-    $applied = db()->query('SELECT filename FROM schema_migrations')->fetchAll(PDO::FETCH_COLUMN);
-    $files   = glob(__DIR__ . '/../migrations/*.sql') ?: [];
-    sort($files);
-
-    $ran = [];
-    foreach ($files as $file) {
-        $name = basename($file);
-        if (in_array($name, $applied, true)) {
-            continue;
-        }
-
-        $sql = file_get_contents($file);
-        if ($sql === false) {
-            throw new RuntimeException("Could not read migration $name");
-        }
-
-        // Split on ";" at end of line (per migration conventions in CLAUDE.md).
-        foreach (preg_split('/;\s*(?:\r?\n|$)/', $sql) as $statement) {
-            // Strip full-line comments, keep the statement body.
-            $statement = trim(preg_replace('/^\s*--.*$/m', '', $statement) ?? '');
-            if ($statement !== '') {
-                db()->exec($statement);
-            }
-        }
-
-        db()->prepare('INSERT INTO schema_migrations (filename) VALUES (?)')->execute([$name]);
-        $ran[] = $name;
-    }
-
-    return $ran;
 }
 
 /** Make a URL-safe slug out of a school name. */
@@ -136,18 +92,7 @@ if ($dbOk && !$installed && $_SERVER['REQUEST_METHOD'] === 'POST') {
                  VALUES (?, ?, ?, ?, \'admin\')'
             )->execute([$schoolId, $adminName, $adminEmail, password_hash($password, PASSWORD_DEFAULT)]);
 
-            $defaults = [
-                'color_primary'      => '#1d4ed8',
-                'color_secondary'    => '#111827',
-                'logo_path'          => '',
-                'sponsorship_levels' => json_encode(['Platinum', 'Gold', 'Silver', 'Bronze']),
-            ];
-            $ins = $pdo->prepare(
-                'INSERT INTO school_settings (school_id, setting_key, setting_value) VALUES (?, ?, ?)'
-            );
-            foreach ($defaults as $key => $value) {
-                $ins->execute([$schoolId, $key, $value]);
-            }
+            seed_school_defaults($pdo, $schoolId);
 
             $pdo->commit();
             $success   = true;

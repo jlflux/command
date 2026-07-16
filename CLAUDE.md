@@ -20,22 +20,52 @@ by it**.
 
 ```
 /public              Web root (only this directory is web-accessible)
-  index.php          Front controller / landing
+  index.php          Dashboard (readiness view once the schedule module exists)
+  login.php          Login (standalone page, session throttled)
+  logout.php         POST-only logout
+  users.php          User list + activate/deactivate (admin)
+  user_edit.php      Create/edit user incl. default job types (admin)
+  settings.php       School settings: identity, colors, logo, sponsorship
+                     levels, job types, pending migrations (admin)
+  schedule.php etc.  One thin entry script per module (stubs until built)
   install.php        One-time installer (disable via INSTALL_ENABLED after use)
-  assets/css/        Stylesheets (vanilla CSS)
-  assets/js/         Scripts (vanilla JS)
-  uploads/           User-uploaded files (PHP execution blocked via .htaccess)
+  assets/css/app.css Base stylesheet (vanilla CSS)
+  assets/js/app.js   Base behavior: nav toggle, data-confirm, csrfToken()
+  uploads/           User-uploaded files (PHP execution blocked via .htaccess;
+                     stored under uploads/{school_id}/...)
 /app                 Application code (NOT web-accessible)
   config.php         DB credentials + app constants (placeholders in git)
   db.php             db() — PDO singleton
-  helpers.php        Session bootstrap, auth, tenant scoping, CSRF, misc helpers
-  views/             Page templates (server-rendered PHP)
+  helpers.php        Session bootstrap, auth, tenant scoping, CSRF, flash,
+                     view(), settings + theming helpers
+  migrate.php        Migration runner (used by installer and settings page)
+  seed.php           seed_school_defaults() — default rows for a new school
+  views/             Page templates rendered via view() inside the base layout
+                     (layout_header.php / layout_footer.php)
   api/               JSON endpoints for AJAX (routed through /public)
-/migrations          Numbered SQL files: 001_init.sql, 002_*.sql, ...
+/migrations          Numbered SQL files: 001_init.sql, 002_auth.sql, ...
 ```
 
 `app/helpers.php` requires `config.php` and `db.php` and starts the session —
 every entry-point script only needs `require __DIR__ . '/../app/helpers.php';`.
+
+### Page pattern (the "middleware")
+
+Every entry script follows the same shape — this is the guard chain, don't
+deviate from it:
+
+```php
+require __DIR__ . '/../app/helpers.php';
+$user = require_login();               // or require_role('admin') etc.
+// POST handling: require_csrf(); ...tenant_query() writes...; flash(); redirect();
+// GET: gather data with tenant_fetch()/tenant_fetch_all()
+view('template_name', ['title' => ..., 'active' => 'navkey', 'user' => $user, ...]);
+```
+
+`view()` wraps the template in the base layout (top nav, school logo, theme
+colors, flash messages). It requires a logged-in user — login/install pages
+render their own standalone HTML instead. Redirect-after-POST always; use
+`flash($msg)` / `flash($msg, 'error')` for feedback across the redirect.
 
 ## Multi-tenancy rules (read this twice)
 
@@ -53,8 +83,11 @@ every entry-point script only needs `require __DIR__ . '/../app/helpers.php';`.
    must be indistinguishable (both → 404).
 5. Uploaded files are stored under `public/uploads/{school_id}/...`.
 6. No cross-tenant data leaks, ever. If a query cannot be tenant-scoped
-   (e.g. login by email, super-admin tooling), that must be an explicit,
-   commented exception.
+   (e.g. login by email, super-admin tooling, seeding a brand-new school),
+   that must be an explicit, commented exception.
+7. Pure junction tables (e.g. `user_job_types`) may omit `school_id`, but
+   only if **both** parent ids are tenant-validated before any read or write
+   touches the junction.
 
 ## Roles (per school)
 
@@ -70,7 +103,9 @@ Hierarchy: `viewer < staff < manager < admin`. Use `require_role('manager')`
 
 ## Core modules (built in phases — check what exists before assuming)
 
-1. **Auth & multi-tenancy** — schools, users, roles. *(skeleton done)*
+1. **Auth & multi-tenancy** — schools, users, roles. *(DONE: login/logout,
+   user management with default job types, school settings incl. theming,
+   base layout, tenant helpers)*
 2. **Master athletic schedule** — the backbone; everything links to events.
 3. **Sponsorship management** — sponsors, contracts, invoices, payments,
    fulfillment obligations, assets.
@@ -97,9 +132,13 @@ Hierarchy: `viewer < staff < manager < admin`. Use `require_role('manager')`
   stadium: big touch targets, minimal typing, fast pages, works on spotty
   connections. Design mobile-first, enhance for desktop.
 - **Per-school customization** lives in `school_settings` (key/value).
-  Known keys so far: `color_primary`, `color_secondary`, `logo_path`,
-  `sponsorship_levels` (JSON array of level names, e.g.
-  `["Platinum","Gold","Silver","Bronze"]`).
+  Known keys: `color_primary`, `color_secondary`, `logo_path`, `mascot`,
+  `timezone`. Structured per-school lists get real tables instead:
+  `sponsorship_levels` (name, color, sort_order; seeded Red / White / Blue /
+  Patriot Partner) and `job_types` (seeded with the 12 standard event jobs,
+  schools can add custom ones). Defaults for a new school come from
+  `app/seed.php`; keep its lists in sync with the backfill in
+  `migrations/002_auth.sql`.
 
 ## Coding conventions
 
