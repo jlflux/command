@@ -1,0 +1,6 @@
+# User-uploaded files only — never execute code from this directory.
+<FilesMatch "\.(php|phtml|php\d|pl|py|cgi|sh)$">
+    Require all denied
+</FilesMatch>
+php_flag engine off
+Options -Indexes -ExecCGI

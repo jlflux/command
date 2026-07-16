@@ -1,0 +1,24 @@
+/* Athletics Command Center — base stylesheet.
+   Mobile-first; enhance with min-width media queries.
+   School colors are injected per tenant as --color-primary / --color-secondary. */
+
+:root {
+    --color-primary: #1d4ed8;
+    --color-secondary: #111827;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    font-family: system-ui, -apple-system, sans-serif;
+    margin: 0;
+    background: #f3f4f6;
+    color: #111827;
+    -webkit-text-size-adjust: 100%;
+}
+
+.wrap {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 1rem;
+}

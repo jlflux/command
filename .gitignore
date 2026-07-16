@@ -1,0 +1,7 @@
+# Uploaded tenant files — never in git (keep the .htaccess guard, though)
+public/uploads/*
+!public/uploads/.htaccess
+
+# Local overrides / editor noise
+*.local.php
+.DS_Store
