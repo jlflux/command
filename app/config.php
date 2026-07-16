@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 // --- Database -------------------------------------------------------------
 const DB_HOST    = 'localhost';
+const DB_PORT    = 3306;
 const DB_NAME    = 'CHANGE_ME_db_name';
 const DB_USER    = 'CHANGE_ME_db_user';
 const DB_PASS    = 'CHANGE_ME_db_password';
