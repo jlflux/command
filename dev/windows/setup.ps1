@@ -1,8 +1,8 @@
 <#
-Athletics Command Center — portable Windows dev environment setup.
+Athletics Command Center - portable Windows dev environment setup.
 
-Downloads portable PHP (NTS x64) and MariaDB into <repo>\local-dev — no
-installers, no admin rights needed — then configures both, creates the
+Downloads portable PHP (NTS x64) and MariaDB into <repo>\local-dev - no
+installers, no admin rights needed - then configures both, creates the
 application database, and writes app\config.local.php.
 
 Run once via setup.bat. Afterwards use start.bat / stop.bat.
@@ -49,7 +49,7 @@ if (-not (Test-Path $phpExe)) {
     $releases = Invoke-RestMethod -Uri 'https://windows.php.net/downloads/releases/releases.json' -UseBasicParsing
     $series = $releases.$PhpSeries
     if (-not $series) {
-        throw "PHP series $PhpSeries not found on windows.php.net. Available: $($releases.PSObject.Properties.Name -join ', ') — rerun with -PhpSeries."
+        throw "PHP series $PhpSeries not found on windows.php.net. Available: $($releases.PSObject.Properties.Name -join ', ') - rerun with -PhpSeries."
     }
     $build = $series.PSObject.Properties | Where-Object { $_.Name -match '^nts-vs\d+-x64$' } | Select-Object -First 1
     if (-not $build) { throw "No NTS x64 build found for PHP $PhpSeries" }
@@ -59,7 +59,7 @@ if (-not (Test-Path $phpExe)) {
     Expand-Archive -Path $zipFile -DestinationPath $phpDir -Force
     Write-Host "  PHP extracted to $phpDir"
 } else {
-    Write-Host '== PHP already present — skipping download =='
+    Write-Host '== PHP already present - skipping download =='
 }
 
 Write-Host '== Writing php.ini =='
@@ -81,7 +81,7 @@ session.save_path = "$dev\tmp"
 upload_tmp_dir = "$dev\tmp"
 "@
 
-# Sanity check — catches a missing Visual C++ runtime early.
+# Sanity check - catches a missing Visual C++ runtime early.
 & $phpExe -v | Select-Object -First 1 | Write-Host
 if ($LASTEXITCODE -ne 0) {
     throw 'php.exe failed to run. If Windows reported a missing VCRUNTIME140.dll, install the Visual C++ runtime first: https://aka.ms/vs/17/release/vc_redist.x64.exe'
@@ -109,7 +109,7 @@ if (-not (Test-Path $mariadbd)) {
     Remove-Item $tmpExtract -Recurse -Force -ErrorAction SilentlyContinue
     Write-Host "  MariaDB extracted to $mdbDir"
 } else {
-    Write-Host '== MariaDB already present — skipping download =='
+    Write-Host '== MariaDB already present - skipping download =='
 }
 
 Write-Host '== Writing my.ini =='
@@ -131,7 +131,7 @@ host=127.0.0.1
 if (-not (Test-Path $dataDir)) {
     Write-Host '== Initializing database files =='
     & (Join-Path $mdbDir 'bin\mariadb-install-db.exe') "--datadir=$dataDir" | Out-Null
-    if ($LASTEXITCODE -ne 0) { throw 'mariadb-install-db failed — see output above.' }
+    if ($LASTEXITCODE -ne 0) { throw 'mariadb-install-db failed - see output above.' }
 }
 
 # ---------------------------------------------------------------------------
@@ -165,11 +165,11 @@ if (-not $alreadyRunning) {
 }
 
 # ---------------------------------------------------------------------------
-# app/config.local.php (gitignored) — points the app at this local database
+# app/config.local.php (gitignored) - points the app at this local database
 # ---------------------------------------------------------------------------
 $configLocal = Join-Path $repo 'app\config.local.php'
 if (Test-Path $configLocal) {
-    Write-Host '== app\config.local.php already exists — leaving it untouched =='
+    Write-Host '== app\config.local.php already exists - leaving it untouched =='
 } else {
     Write-Host '== Writing app\config.local.php =='
     Write-TextFile $configLocal @"
@@ -190,6 +190,6 @@ Write-Host ''
 Write-Host '=========================================================='
 Write-Host ' Setup complete.'
 Write-Host ' Double-click dev\windows\start.bat to launch the app.'
-Write-Host " First visit opens the installer — create your school"
+Write-Host " First visit opens the installer - create your school"
 Write-Host ' and admin login there.'
 Write-Host '=========================================================='
