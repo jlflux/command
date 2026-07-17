@@ -11,10 +11,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Confirmation prompts: <form data-confirm="Are you sure?">
+    // Confirmation prompts: <form data-confirm="..."> or <button data-confirm="...">
     document.querySelectorAll('form[data-confirm]').forEach((form) => {
         form.addEventListener('submit', (event) => {
             if (!window.confirm(form.dataset.confirm)) {
+                event.preventDefault();
+            }
+        });
+    });
+    document.querySelectorAll('button[data-confirm]').forEach((button) => {
+        button.addEventListener('click', (event) => {
+            if (!window.confirm(button.dataset.confirm)) {
                 event.preventDefault();
             }
         });

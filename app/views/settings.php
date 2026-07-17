@@ -121,6 +121,110 @@
     </form>
 </div>
 
+<?php if ($scheduleTablesReady): ?>
+<div class="card">
+    <h2>Sports</h2>
+    <p class="muted">Icon, name, and display order. Deactivated sports keep their history.</p>
+    <?php foreach ($sports as $sp): ?>
+        <form method="post" action="<?= e(BASE_URL) ?>/settings.php" class="row-form<?= $sp['is_active'] ? '' : ' inactive-row' ?>">
+            <?= csrf_field() ?>
+            <input type="hidden" name="action" value="sport_row">
+            <input type="hidden" name="id" value="<?= (int)$sp['id'] ?>">
+            <input name="icon" maxlength="8" value="<?= e($sp['icon']) ?>" class="input-xs" aria-label="Icon">
+            <input name="name" required maxlength="80" value="<?= e($sp['name']) ?>" aria-label="Sport name">
+            <input name="sort_order" type="number" value="<?= (int)$sp['sort_order'] ?>" class="input-sm" aria-label="Sort order">
+            <button type="submit" name="do" value="save" class="btn btn-sm">Save</button>
+            <button type="submit" name="do" value="toggle" class="btn btn-sm<?= $sp['is_active'] ? ' btn-danger' : '' ?>" formnovalidate>
+                <?= $sp['is_active'] ? 'Deactivate' : 'Reactivate' ?>
+            </button>
+        </form>
+    <?php endforeach; ?>
+    <form method="post" action="<?= e(BASE_URL) ?>/settings.php" class="row-form">
+        <?= csrf_field() ?>
+        <input type="hidden" name="action" value="sport_add">
+        <input name="icon" maxlength="8" placeholder="🏆" class="input-xs" aria-label="Icon">
+        <input name="name" required maxlength="80" placeholder="New sport" aria-label="New sport name">
+        <button type="submit" class="btn btn-sm btn-primary">Add sport</button>
+    </form>
+</div>
+
+<div class="card">
+    <h2>Levels</h2>
+    <?php foreach ($schedLevels as $lv): ?>
+        <form method="post" action="<?= e(BASE_URL) ?>/settings.php" class="row-form<?= $lv['is_active'] ? '' : ' inactive-row' ?>">
+            <?= csrf_field() ?>
+            <input type="hidden" name="action" value="level_row_sched">
+            <input type="hidden" name="id" value="<?= (int)$lv['id'] ?>">
+            <input name="name" required maxlength="80" value="<?= e($lv['name']) ?>" aria-label="Level name">
+            <input name="sort_order" type="number" value="<?= (int)$lv['sort_order'] ?>" class="input-sm" aria-label="Sort order">
+            <button type="submit" name="do" value="save" class="btn btn-sm">Save</button>
+            <button type="submit" name="do" value="toggle" class="btn btn-sm<?= $lv['is_active'] ? ' btn-danger' : '' ?>" formnovalidate>
+                <?= $lv['is_active'] ? 'Deactivate' : 'Reactivate' ?>
+            </button>
+        </form>
+    <?php endforeach; ?>
+    <form method="post" action="<?= e(BASE_URL) ?>/settings.php" class="row-form">
+        <?= csrf_field() ?>
+        <input type="hidden" name="action" value="level_add">
+        <input name="name" required maxlength="80" placeholder="New level" aria-label="New level name">
+        <button type="submit" class="btn btn-sm btn-primary">Add level</button>
+    </form>
+</div>
+
+<div class="card">
+    <h2>Event types</h2>
+    <p class="muted">"Competition" types expect scores, results, and ticket links.</p>
+    <?php foreach ($eventTypes as $et): ?>
+        <form method="post" action="<?= e(BASE_URL) ?>/settings.php" class="row-form<?= $et['is_active'] ? '' : ' inactive-row' ?>">
+            <?= csrf_field() ?>
+            <input type="hidden" name="action" value="eventtype_row">
+            <input type="hidden" name="id" value="<?= (int)$et['id'] ?>">
+            <input name="name" required maxlength="80" value="<?= e($et['name']) ?>" aria-label="Event type name">
+            <label class="check"><input type="checkbox" name="is_competition" value="1"<?= $et['is_competition'] ? ' checked' : '' ?>> Competition</label>
+            <input name="sort_order" type="number" value="<?= (int)$et['sort_order'] ?>" class="input-sm" aria-label="Sort order">
+            <button type="submit" name="do" value="save" class="btn btn-sm">Save</button>
+            <button type="submit" name="do" value="toggle" class="btn btn-sm<?= $et['is_active'] ? ' btn-danger' : '' ?>" formnovalidate>
+                <?= $et['is_active'] ? 'Deactivate' : 'Reactivate' ?>
+            </button>
+        </form>
+    <?php endforeach; ?>
+    <form method="post" action="<?= e(BASE_URL) ?>/settings.php" class="row-form">
+        <?= csrf_field() ?>
+        <input type="hidden" name="action" value="eventtype_add">
+        <input name="name" required maxlength="80" placeholder="New event type" aria-label="New event type name">
+        <label class="check"><input type="checkbox" name="is_competition" value="1"> Competition</label>
+        <button type="submit" class="btn btn-sm btn-primary">Add type</button>
+    </form>
+</div>
+
+<div class="card">
+    <h2>Venues</h2>
+    <p class="muted">Home fields/gyms and recurring sites. Mark home venues so events default sensibly.</p>
+    <?php foreach ($venues as $vn): ?>
+        <form method="post" action="<?= e(BASE_URL) ?>/settings.php" class="row-form">
+            <?= csrf_field() ?>
+            <input type="hidden" name="action" value="venue_row">
+            <input type="hidden" name="id" value="<?= (int)$vn['id'] ?>">
+            <input name="name" required maxlength="150" value="<?= e($vn['name']) ?>" aria-label="Venue name">
+            <input name="address" maxlength="255" value="<?= e((string)$vn['address']) ?>" placeholder="Address" aria-label="Address">
+            <label class="check"><input type="checkbox" name="is_home" value="1"<?= $vn['is_home'] ? ' checked' : '' ?>> Home</label>
+            <input name="sort_order" type="number" value="<?= (int)$vn['sort_order'] ?>" class="input-sm" aria-label="Sort order">
+            <button type="submit" name="do" value="save" class="btn btn-sm">Save</button>
+            <button type="submit" name="do" value="delete" class="btn btn-sm btn-danger" formnovalidate
+                    data-confirm="Delete venue '<?= e($vn['name']) ?>'? Events using it keep their date but lose the venue.">Delete</button>
+        </form>
+    <?php endforeach; ?>
+    <form method="post" action="<?= e(BASE_URL) ?>/settings.php" class="row-form">
+        <?= csrf_field() ?>
+        <input type="hidden" name="action" value="venue_add">
+        <input name="name" required maxlength="150" placeholder="New venue" aria-label="New venue name">
+        <input name="address" maxlength="255" placeholder="Address" aria-label="Address">
+        <label class="check"><input type="checkbox" name="is_home" value="1"> Home</label>
+        <button type="submit" class="btn btn-sm btn-primary">Add venue</button>
+    </form>
+</div>
+<?php endif; ?>
+
 <div class="card">
     <h2>Database</h2>
     <?php if ($pendingMigrations): ?>

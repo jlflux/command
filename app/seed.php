@@ -35,6 +35,42 @@ const DEFAULT_SPONSORSHIP_LEVELS = [
     ['Patriot Partner', '#1e3a8a', 40],
 ];
 
+/** name => [icon, sort_order] */
+const DEFAULT_SPORTS = [
+    'Football'           => ['🏈', 10],
+    'Volleyball'         => ['🏐', 20],
+    'Basketball (Boys)'  => ['🏀', 30],
+    'Basketball (Girls)' => ['🏀', 40],
+    'Baseball'           => ['⚾', 50],
+    'Softball'           => ['🥎', 60],
+    'Soccer (Boys)'      => ['⚽', 70],
+    'Soccer (Girls)'     => ['⚽', 80],
+    'Track & Field'      => ['🏃', 90],
+    'Cross Country'      => ['🏃', 100],
+    'Swimming'           => ['🏊', 110],
+    'Wrestling'          => ['🤼', 120],
+    'Tennis'             => ['🎾', 130],
+    'Golf'               => ['⛳', 140],
+    'Cheer'              => ['📣', 150],
+];
+
+/** name => sort_order */
+const DEFAULT_LEVELS = [
+    'Varsity'       => 10,
+    'JV'            => 20,
+    'Freshman'      => 30,
+    'Middle School' => 40,
+];
+
+/** name => [is_competition, sort_order] */
+const DEFAULT_EVENT_TYPES = [
+    'Competition'   => [1, 10],
+    'Media Day'     => [0, 20],
+    'Banquet'       => [0, 30],
+    'Special Event' => [0, 40],
+    'Practice'      => [0, 50],
+];
+
 /** setting_key => default value */
 const DEFAULT_SCHOOL_SETTINGS = [
     'color_primary'   => '#1d4ed8',
@@ -65,5 +101,26 @@ function seed_school_defaults(PDO $pdo, int $schoolId): void
     );
     foreach (DEFAULT_SCHOOL_SETTINGS as $key => $value) {
         $setting->execute([$schoolId, $key, $value]);
+    }
+
+    $sport = $pdo->prepare(
+        'INSERT IGNORE INTO sports (school_id, name, icon, sort_order) VALUES (?, ?, ?, ?)'
+    );
+    foreach (DEFAULT_SPORTS as $name => [$icon, $sortOrder]) {
+        $sport->execute([$schoolId, $name, $icon, $sortOrder]);
+    }
+
+    $level = $pdo->prepare(
+        'INSERT IGNORE INTO levels (school_id, name, sort_order) VALUES (?, ?, ?)'
+    );
+    foreach (DEFAULT_LEVELS as $name => $sortOrder) {
+        $level->execute([$schoolId, $name, $sortOrder]);
+    }
+
+    $eventType = $pdo->prepare(
+        'INSERT IGNORE INTO event_types (school_id, name, is_competition, sort_order) VALUES (?, ?, ?, ?)'
+    );
+    foreach (DEFAULT_EVENT_TYPES as $name => [$isCompetition, $sortOrder]) {
+        $eventType->execute([$schoolId, $name, $isCompetition, $sortOrder]);
     }
 }

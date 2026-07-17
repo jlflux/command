@@ -167,6 +167,128 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 flash('Job type saved.');
                 break;
 
+            case 'sport_add':
+            case 'level_add':
+            case 'eventtype_add':
+            case 'venue_add': {
+                $table = ['sport_add' => 'sports', 'level_add' => 'levels',
+                          'eventtype_add' => 'event_types', 'venue_add' => 'venues'][$_POST['action']];
+                $name = trim($_POST['name'] ?? '');
+                if ($name === '' || mb_strlen($name) > ($table === 'venues' || $table === 'opponents' ? 150 : 80)) {
+                    flash('A name is required (keep it short).', 'error');
+                    break;
+                }
+                $max = tenant_fetch(
+                    "SELECT COALESCE(MAX(sort_order), 0) AS m FROM $table WHERE school_id = :school_id"
+                );
+                $sort = (int)($max['m'] ?? 0) + 10;
+                switch ($table) {
+                    case 'sports':
+                        tenant_query(
+                            'INSERT INTO sports (school_id, name, icon, sort_order) VALUES (:school_id, :name, :icon, :sort)',
+                            ['name' => $name, 'icon' => mb_substr(trim($_POST['icon'] ?? ''), 0, 8), 'sort' => $sort]
+                        );
+                        break;
+                    case 'levels':
+                        tenant_query(
+                            'INSERT INTO levels (school_id, name, sort_order) VALUES (:school_id, :name, :sort)',
+                            ['name' => $name, 'sort' => $sort]
+                        );
+                        break;
+                    case 'event_types':
+                        tenant_query(
+                            'INSERT INTO event_types (school_id, name, is_competition, sort_order)
+                             VALUES (:school_id, :name, :comp, :sort)',
+                            ['name' => $name, 'comp' => isset($_POST['is_competition']) ? 1 : 0, 'sort' => $sort]
+                        );
+                        break;
+                    case 'venues':
+                        tenant_query(
+                            'INSERT INTO venues (school_id, name, address, is_home, sort_order)
+                             VALUES (:school_id, :name, :address, :home, :sort)',
+                            ['name' => $name, 'address' => trim($_POST['address'] ?? '') ?: null,
+                             'home' => isset($_POST['is_home']) ? 1 : 0, 'sort' => $sort]
+                        );
+                        break;
+                }
+                flash("\"$name\" added.");
+                break;
+            }
+
+            case 'sport_row':
+            case 'level_row_sched':
+            case 'eventtype_row':
+            case 'venue_row': {
+                $table = ['sport_row' => 'sports', 'level_row_sched' => 'levels',
+                          'eventtype_row' => 'event_types', 'venue_row' => 'venues'][$_POST['action']];
+                $id = (int)($_POST['id'] ?? 0);
+                $row = tenant_fetch(
+                    "SELECT * FROM $table WHERE id = :id AND school_id = :school_id",
+                    ['id' => $id]
+                ) ?? not_found();
+                $do = $_POST['do'] ?? 'save';
+
+                if ($do === 'toggle' && $table !== 'venues') {
+                    tenant_query(
+                        "UPDATE $table SET is_active = 1 - is_active WHERE id = :id AND school_id = :school_id",
+                        ['id' => $id]
+                    );
+                    flash("\"{$row['name']}\" " . ($row['is_active'] ? 'deactivated.' : 'reactivated.'));
+                    break;
+                }
+                if ($do === 'delete' && $table === 'venues') {
+                    // events.venue_id is ON DELETE SET NULL — safe to remove.
+                    tenant_query(
+                        'DELETE FROM venues WHERE id = :id AND school_id = :school_id',
+                        ['id' => $id]
+                    );
+                    flash("\"{$row['name']}\" deleted.");
+                    break;
+                }
+
+                $name = trim($_POST['name'] ?? '');
+                if ($name === '' || mb_strlen($name) > 150) {
+                    flash('A name is required.', 'error');
+                    break;
+                }
+                $sort = (int)($_POST['sort_order'] ?? $row['sort_order']);
+                switch ($table) {
+                    case 'sports':
+                        tenant_query(
+                            'UPDATE sports SET name = :name, icon = :icon, sort_order = :sort
+                             WHERE id = :id AND school_id = :school_id',
+                            ['id' => $id, 'name' => $name,
+                             'icon' => mb_substr(trim($_POST['icon'] ?? ''), 0, 8), 'sort' => $sort]
+                        );
+                        break;
+                    case 'levels':
+                        tenant_query(
+                            'UPDATE levels SET name = :name, sort_order = :sort
+                             WHERE id = :id AND school_id = :school_id',
+                            ['id' => $id, 'name' => $name, 'sort' => $sort]
+                        );
+                        break;
+                    case 'event_types':
+                        tenant_query(
+                            'UPDATE event_types SET name = :name, is_competition = :comp, sort_order = :sort
+                             WHERE id = :id AND school_id = :school_id',
+                            ['id' => $id, 'name' => $name,
+                             'comp' => isset($_POST['is_competition']) ? 1 : 0, 'sort' => $sort]
+                        );
+                        break;
+                    case 'venues':
+                        tenant_query(
+                            'UPDATE venues SET name = :name, address = :address, is_home = :home, sort_order = :sort
+                             WHERE id = :id AND school_id = :school_id',
+                            ['id' => $id, 'name' => $name, 'address' => trim($_POST['address'] ?? '') ?: null,
+                             'home' => isset($_POST['is_home']) ? 1 : 0, 'sort' => $sort]
+                        );
+                        break;
+                }
+                flash('Saved.');
+                break;
+            }
+
             case 'migrate':
                 $ran = run_pending_migrations();
                 flash($ran ? 'Applied: ' . implode(', ', $ran) : 'Database already up to date.');
@@ -195,14 +317,37 @@ $jobTypes = tenant_fetch_all(
 );
 $maxSort = $levels ? max(array_map(fn (array $l) => (int)$l['sort_order'], $levels)) : 0;
 
+// Schedule lookups may not exist yet if 003 hasn't been applied — the page
+// must still render so the admin can reach the "apply migrations" button.
+$scheduleLookups = ['sports' => [], 'schedLevels' => [], 'eventTypes' => [], 'venues' => []];
+try {
+    $scheduleLookups['sports'] = tenant_fetch_all(
+        'SELECT * FROM sports WHERE school_id = :school_id ORDER BY is_active DESC, sort_order, name'
+    );
+    $scheduleLookups['schedLevels'] = tenant_fetch_all(
+        'SELECT * FROM levels WHERE school_id = :school_id ORDER BY is_active DESC, sort_order, name'
+    );
+    $scheduleLookups['eventTypes'] = tenant_fetch_all(
+        'SELECT * FROM event_types WHERE school_id = :school_id ORDER BY is_active DESC, sort_order, name'
+    );
+    $scheduleLookups['venues'] = tenant_fetch_all(
+        'SELECT * FROM venues WHERE school_id = :school_id ORDER BY is_home DESC, sort_order, name'
+    );
+    $scheduleTablesReady = true;
+} catch (PDOException) {
+    $scheduleTablesReady = false;
+}
+
 view('settings', [
-    'title'             => 'School settings',
-    'active'            => 'settings',
-    'user'              => $user,
-    'school'            => current_school(),
-    'levels'            => $levels,
-    'jobTypes'          => $jobTypes,
-    'nextLevelSort'     => $maxSort + 10,
-    'timezones'         => DateTimeZone::listIdentifiers(),
-    'pendingMigrations' => migrations_pending(),
+    'title'               => 'School settings',
+    'active'              => 'settings',
+    'user'                => $user,
+    'school'              => current_school(),
+    'levels'              => $levels,
+    'jobTypes'            => $jobTypes,
+    'nextLevelSort'       => $maxSort + 10,
+    'timezones'           => DateTimeZone::listIdentifiers(),
+    'pendingMigrations'   => migrations_pending(),
+    'scheduleTablesReady' => $scheduleTablesReady,
+    ...$scheduleLookups,
 ]);

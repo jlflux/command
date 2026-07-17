@@ -27,7 +27,16 @@ by it**.
   user_edit.php      Create/edit user incl. default job types (admin)
   settings.php       School settings: identity, colors, logo, sponsorship
                      levels, job types, pending migrations (admin)
-  schedule.php etc.  One thin entry script per module (stubs until built)
+  schedule.php       Schedule list (This Week default; sport/level/H-A/date
+                     filters; readiness badges)
+  calendar.php       Month calendar view
+  event.php          Event detail (read view; ops page comes in Phase 4)
+  event_edit.php     Add/edit event incl. needs (workers by job type,
+                     equipment, social, transportation)
+  event_bulk.php     Bulk add: one team, many games; auto-creates opponents
+  opponents.php      Opponent list + delete
+  opponent_edit.php  Opponent create/edit incl. logo upload
+  events.php etc.    One thin entry script per module (stubs until built)
   install.php        One-time installer (disable via INSTALL_ENABLED after use)
   assets/css/app.css Base stylesheet (vanilla CSS)
   assets/js/app.js   Base behavior: nav toggle, data-confirm, csrfToken()
@@ -40,6 +49,8 @@ by it**.
                      view(), settings + theming helpers
   migrate.php        Migration runner (used by installer and settings page)
   seed.php           seed_school_defaults() — default rows for a new school
+  schedule.php       Readiness engine (readiness_map()) + schedule fetch and
+                     display helpers (event_title, fmt_date, ...)
   views/             Page templates rendered via view() inside the base layout
                      (layout_header.php / layout_footer.php)
   api/               JSON endpoints for AJAX (routed through /public)
@@ -107,6 +118,12 @@ Hierarchy: `viewer < staff < manager < admin`. Use `require_role('manager')`
    user management with default job types, school settings incl. theming,
    base layout, tenant helpers)*
 2. **Master athletic schedule** — the backbone; everything links to events.
+   *(DONE: sports/levels/event_types/venues lookups managed in settings,
+   opponents with logos, events + event_needs + event_worker_needs, list +
+   calendar + detail + single/bulk entry, readiness engine in
+   app/schedule.php with stubs for Phase 3 sponsor obligations and Phase 4
+   assignment counts — see readiness_workers_assigned() /
+   readiness_sponsor_obligations())*
 3. **Sponsorship management** — sponsors, contracts, invoices, payments,
    fulfillment obligations, assets.
 4. **Event operations** — per-event command sheet: staffing assignments,

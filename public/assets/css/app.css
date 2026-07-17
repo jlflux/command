@@ -318,3 +318,159 @@ input[type="color"] {
 .auth-page { background: var(--gray-bg); }
 .auth-wrap { max-width: 420px; margin: 8vh auto 0; padding: 0 1rem; }
 .auth-card h1 { font-size: 1.2rem; margin-bottom: .25rem; }
+
+/* --- Schedule module ---------------------------------------------------------- */
+
+.btn-row { display: flex; gap: .5rem; flex-wrap: wrap; }
+
+.filter-bar { padding: .75rem 1.25rem; }
+
+.view-tabs { display: flex; gap: .25rem; flex-wrap: wrap; margin-bottom: .6rem; }
+
+.view-tabs .tab {
+    padding: .45rem .8rem;
+    border-radius: 6px;
+    text-decoration: none;
+    color: inherit;
+    font-size: .9rem;
+    font-weight: 600;
+}
+
+.view-tabs .tab.active { background: var(--color-primary); color: var(--on-primary); }
+
+.filter-form { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+
+.filter-form select, .filter-form input {
+    padding: .45rem .5rem;
+    font-size: .9rem;
+    border: 1px solid var(--gray-border);
+    border-radius: 6px;
+    background: #fff;
+    max-width: 180px;
+}
+
+.nowrap { white-space: nowrap; }
+
+.schedule-table td { vertical-align: top; }
+
+.event-link { text-decoration: none; color: inherit; font-weight: 600; }
+.event-link:hover { text-decoration: underline; }
+
+.sport-icon { margin-right: .15rem; }
+
+tr.status-cancelled td, tr.status-postponed td { opacity: .55; }
+tr.status-cancelled .event-link { text-decoration: line-through; }
+
+.badges { display: inline-flex; gap: .3rem; flex-wrap: wrap; }
+
+.badge-warn  { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+.badge-crit  { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+.badge-ready { background: #dcfce7; color: #166534; border-color: #86efac; }
+.badge-status { background: var(--gray-bg); }
+.badge-result { font-weight: 700; }
+.badge-W { background: #dcfce7; color: #166534; }
+.badge-L { background: #fee2e2; color: #991b1b; }
+.badge-T { background: var(--gray-bg); }
+
+/* Event form */
+.hint { margin: .25rem 0 0; font-size: .85rem; }
+
+.score-inputs { display: flex; gap: .5rem; }
+.score-inputs input { max-width: 90px; }
+
+.worker-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: .4rem .9rem;
+}
+
+.worker-cell {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    font-size: .9rem;
+}
+
+.worker-cell input { width: 70px; padding: .4rem .5rem; border: 1px solid var(--gray-border); border-radius: 6px; }
+
+.sticky-actions {
+    position: sticky;
+    bottom: 0;
+    background: var(--gray-bg);
+    padding: .75rem 0;
+}
+
+.danger-zone { border: 1px solid #fecaca; }
+
+.input-xs { flex: 0 0 56px !important; text-align: center; }
+
+/* Bulk add */
+.bulk-table input, .bulk-table select {
+    padding: .4rem .5rem;
+    font-size: .9rem;
+    border: 1px solid var(--gray-border);
+    border-radius: 6px;
+    width: 100%;
+    min-width: 110px;
+}
+.bulk-table td { padding: .25rem .3rem; }
+
+/* Event detail */
+.detail-list { display: grid; grid-template-columns: auto 1fr; gap: .35rem 1rem; margin: 0; }
+.detail-list dt { font-weight: 600; font-size: .85rem; color: var(--gray-text); }
+.detail-list dd { margin: 0; overflow-wrap: anywhere; }
+
+.opponent-summary { display: flex; align-items: center; gap: .75rem; }
+.opponent-logo { max-height: 64px; max-width: 120px; }
+.opponent-thumb { max-height: 36px; max-width: 72px; }
+
+.sub-h { font-size: .85rem; text-transform: uppercase; color: var(--gray-text); margin: .75rem 0 .25rem; }
+.plain-list { margin: 0; padding-left: 1.1rem; }
+
+.readiness-card { border-left: 4px solid var(--color-primary); }
+
+/* Calendar */
+.cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: .75rem; }
+.cal-title { font-size: 1.05rem; }
+
+.cal-grid { border-collapse: collapse; width: 100%; min-width: 700px; table-layout: fixed; }
+
+.cal-grid th {
+    font-size: .75rem;
+    text-transform: uppercase;
+    color: var(--gray-text);
+    padding: .3rem;
+    text-align: left;
+}
+
+.cal-cell {
+    border: 1px solid #e5e7eb;
+    vertical-align: top;
+    height: 90px;
+    padding: .25rem;
+    font-size: .8rem;
+}
+
+.cal-out { background: #fafafa; color: #9ca3af; }
+.cal-today { outline: 2px solid var(--color-primary); outline-offset: -2px; }
+
+.cal-daynum { font-weight: 700; font-size: .8rem; margin-bottom: .2rem; }
+
+.cal-event {
+    display: block;
+    padding: .15rem .3rem;
+    margin-bottom: .2rem;
+    border-radius: 4px;
+    background: var(--gray-bg);
+    color: inherit;
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cal-event.has-alerts { box-shadow: inset 0 0 0 2px #fcd34d; }
+.cal-event.status-cancelled { text-decoration: line-through; opacity: .55; }
+.cal-event:hover { background: #e5e7eb; }
+.cal-legend { margin: .6rem 0 0; font-size: .85rem; }
