@@ -179,8 +179,15 @@ Hierarchy: `viewer < staff < manager < admin`. Use `require_role('manager')`
 
 ## Setup / install
 
-1. Copy real DB credentials into `app/config.php` (placeholders in git —
-   never commit real credentials).
+Local Windows development: see `dev/windows/README.md` — portable PHP +
+MariaDB under `local-dev/` (gitignored), driven by `setup.bat` /
+`start.bat` / `stop.bat`. Local overrides (DB credentials, `APP_ENV`)
+belong in gitignored `app/config.local.php`, never in `app/config.php`.
+
+Production (Hostinger):
+
+1. Create `app/config.local.php` on the server with the real DB
+   credentials (the tracked `app/config.php` keeps placeholders only).
 2. Point the web root at `/public`.
 3. Visit `/install.php` — it runs pending migrations and creates the first
    school + admin user.

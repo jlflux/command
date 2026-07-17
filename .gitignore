@@ -5,3 +5,6 @@ public/uploads/*
 # Local overrides / editor noise
 *.local.php
 .DS_Store
+
+# Portable local dev environment (created by dev/windows/setup.bat)
+local-dev/
